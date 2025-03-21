@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            background-size: 200% 200%;
+            animation: gradientAnimation 10s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .quiz-container {
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #444;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        #options {
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            font-size: 16px;
+        }
+
+        label:hover {
+            background: rgba(255, 255, 255, 1);
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        #timer {
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #d9534f;
+            text-align: center;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #prev-btn {
+            float: right;
+            background: #6c757d;
+        }
+
+        #next-btn {
+            float: right;
+        }
+
+        #prev-btn:hover {
+            background: #545b62;
+        }
+
+        #prev-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: #007bff;
+            width: 0;
+            transition: width 0.3s ease;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h2 id="questionNumber">Question 1 of 5: </h2>
+        <h2 id="question">Loading...</h2>
+        <div id="options"></div>
+        <p id="timer">Time Left: <span id="time-left">60</span>s</p>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <button id="next-btn">Next</button>
+        <button id="prev-btn">Previous</button>
+    </div>
+
+    <script>
+        let timerInterval;
+        const jsonData = {
+            quiz1: [
+                {
+                    id: 1,
+                    question: "Which architectural pattern does ASP.NET Core follow?",
+                    options: ["MVC (Model-View-Controller)", "MVVM (Model-View-ViewModel)", "MVP (Model-View-Presenter)", "None of the above"],
+                    correct_answer: "MVC (Model-View-Controller)",
+                    multiple_answers: false
+                },
+                {
+                    id: 2,
+                    question: "What is the purpose of dependency injection in ASP.NET Core?",
+                    options: ["To make the code more complex", "To replace hard-coded dependencies", "To slow down the server speed", "To handle URL routing"],
+                    correct_answer: "To replace hard-coded dependencies",
+                    multiple_answers: false
+                },
+                {
+                    id: 3,
+                    question: "Which of the following are features of ASP.NET Core?",
+                    options: ["Cross-platform support", "Built-in dependency injection", "Real-time communication", "All of the above"],
+                    correct_answer: ["Cross-platform support", "Built-in dependency injection", "Real-time communication"],
+                    multiple_answers: true
+                },
+                {
+                    id: 4,
+                    question: "The appsettings.json file in ASP.NET Core is used to store configuration settings.",
+                    options: ["True", "False"],
+                    correct_answer: "True",
+                    multiple_answers: false
+                },
+                {
+                    id: 5,
+                    question: "Which programming language is primarily used in ASP.NET Core?",
+                    options: ["Java", "PHP", "C#", "Python"],
+                    correct_answer: "C#",
+                    multiple_answers: false
+                }
+            ]
+        };
+
+        function startTimer(questionId) {
+            let storedTime = sessionStorage.getItem("time_left_" + questionId);
+            let timeLeft = storedTime ? parseInt(storedTime) : 60;
+
+            document.getElementById("time-left").textContent = timeLeft;
+            clearInterval(timerInterval);
+
+            timerInterval = setInterval(function () {
+                timeLeft--;
+                document.getElementById("time-left").textContent = timeLeft;
+                sessionStorage.setItem("time_left_" + questionId, timeLeft);
+
+                let progress = ((60 - timeLeft) / 60) * 100;
+                document.getElementById("progress").style.width = progress + "%";
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    sessionStorage.setItem("timeout_" + questionId, "true");
+                    disableOptions();
+                    autoNextQuestion(questionId);
+                }
+            }, 1000);
+        }
+
+        function autoNextQuestion(questionId) {
+            let nextId = questionId + 1;
+            let nextQuestion = jsonData.quiz1.find(q => q.id === nextId);
+            if (nextQuestion) {
+                window.location.href = `quiz.html?id=${nextId}`;
+            } else {
+                window.location.href = "result.html";
+            }
+        }
+
+        function disableOptions() {
+            document.querySelectorAll("input[type='radio'], input[type='checkbox']").forEach(input => {
+                input.disabled = true;
+            });
+        }
+
+        function loadQuestion() {
+            let questionId = parseInt(new URLSearchParams(window.location.search).get("id")) || 1;
+            let questionData = jsonData.quiz1.find(q => q.id === questionId);
+
+            if (!questionData) {
+                document.getElementById("question").innerHTML = "Question not found";
+                return;
+            }
+
+            document.getElementById("question").textContent = questionData.question;
+            document.getElementById("questionNumber").textContent = "Question " + questionId + " of 5: ";
+            let optionsHtml = "";
+
+            const inputType = questionData.multiple_answers ? "checkbox" : "radio";
+
+            questionData.options.forEach(option => {
+                optionsHtml += `
+                    <label>
+                        <input type="${inputType}" name="option" value="${option}"> ${option}
+                    </label>
+                `;
+            });
+
+            document.getElementById("options").innerHTML = optionsHtml;
+
+            let savedAnswer = sessionStorage.getItem("answer_" + questionId);
+            if (savedAnswer) {
+                if (questionData.multiple_answers) {
+                    savedAnswer = JSON.parse(savedAnswer);
+                    savedAnswer.forEach(answer => {
+                        document.querySelector(`input[value="${answer}"]`).checked = true;
+                    });
+                } else {
+                    document.querySelector(`input[value="${savedAnswer}"]`).checked = true;
+                }
+            }
+
+            document.querySelectorAll("input[name='option']").forEach(input => {
+                input.addEventListener("change", function () {
+                    let selectedAnswers;
+                    if (questionData.multiple_answers) {
+                        selectedAnswers = [];
+                        document.querySelectorAll("input[name='option']:checked").forEach(checkedInput => {
+                            selectedAnswers.push(checkedInput.value);
+                        });
+                        sessionStorage.setItem("answer_" + questionId, JSON.stringify(selectedAnswers));
+                    } else {
+                        selectedAnswers = document.querySelector("input[name='option']:checked").value;
+                        sessionStorage.setItem("answer_" + questionId, selectedAnswers);
+                    }
+                });
+            });
+
+            if (sessionStorage.getItem("timeout_" + questionId) === "true") {
+                disableOptions();
+                document.getElementById("timer").textContent = "Time Up!";
+            } else {
+                startTimer(questionId);
+            }
+
+            document.getElementById("prev-btn").addEventListener("click", function () {
+                let prevId = questionId - 1;
+                if (prevId >= 1) {
+                    window.location.href = `quiz.html?id=${prevId}`;
+                }
+            });
+
+            document.getElementById("next-btn").addEventListener("click", function () {
+                clearInterval(timerInterval);
+                autoNextQuestion(questionId);
+            });
+
+            if (questionId === 1) {
+                document.getElementById("prev-btn").disabled = true;
+            } else {
+                document.getElementById("prev-btn").disabled = false;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadQuestion);
+    </script>
+</body>
+</html>

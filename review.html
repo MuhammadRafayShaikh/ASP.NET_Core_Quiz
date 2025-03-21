@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Your Answers</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 20px;
+        }
+        .review-container {
+            background: white;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #333;
+        }
+        .question {
+            font-weight: bold;
+            color: #444;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .icon {
+            width: 20px;
+            text-align: center;
+        }
+        .option-text {
+            flex: 1;
+        }
+        .option-label {
+            text-align: right;
+        }
+        .correct-answer {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .not-answered {
+            color: orange;
+            font-weight: bold;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .timeTaken {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="review-container">
+        <h2>Review Your Answers</h2>
+        <div id="review"></div>
+        <button id="againQuiz" class="btn">Try Again</button>
+    </div>
+
+    <script>
+        const jsonData = {
+            quiz1: [
+                {
+                    id: 1,
+                    question: "Which architectural pattern does ASP.NET Core follow?",
+                    options: ["MVC (Model-View-Controller)", "MVVM (Model-View-ViewModel)", "MVP (Model-View-Presenter)", "None of the above"],
+                    correct_answer: "MVC (Model-View-Controller)",
+                    multiple_answers: false
+                },
+                {
+                    id: 2,
+                    question: "What is the purpose of dependency injection in ASP.NET Core?",
+                    options: ["To make the code more complex", "To replace hard-coded dependencies", "To slow down the server speed", "To handle URL routing"],
+                    correct_answer: "To replace hard-coded dependencies",
+                    multiple_answers: false
+                },
+                {
+                    id: 3,
+                    question: "Which of the following are features of ASP.NET Core?",
+                    options: ["Cross-platform support", "Built-in dependency injection", "Real-time communication", "All of the above"],
+                    correct_answer: ["Cross-platform support", "Built-in dependency injection", "Real-time communication"],
+                    multiple_answers: true
+                },
+                {
+                    id: 4,
+                    question: "The appsettings.json file in ASP.NET Core is used to store configuration settings.",
+                    options: ["True", "False"],
+                    correct_answer: "True",
+                    multiple_answers: false
+                },
+                {
+                    id: 5,
+                    question: "Which programming language is primarily used in ASP.NET Core?",
+                    options: ["Java", "PHP", "C#", "Python"],
+                    correct_answer: "C#",
+                    multiple_answers: false
+                }
+            ]
+        };
+
+        function showReview() {
+            let reviewHtml = "";
+
+            jsonData.quiz1.forEach(q => {
+                let userAnswer = sessionStorage.getItem("answer_" + q.id);
+                let timeLeft = sessionStorage.getItem("time_left_" + q.id) || 0;
+                let notAnswered = !userAnswer ? "<span class='not-answered'>Not Answered</span>" : "";
+
+                reviewHtml += `<div>
+                    <p class="question">${q.question}</p>
+                    <ul>`;
+
+                q.options.forEach(option => {
+                    let optionClass = "";
+                    let icon = "";
+                    let label = "<span class='option-label'></span>";
+
+                    if (q.multiple_answers) {
+                        if (q.correct_answer.includes(option)) {
+                            optionClass = "correct-answer";
+                            label = "<span class='option-label'>Correct Answer</span>";
+                        }
+                        if (userAnswer && JSON.parse(userAnswer).includes(option)) {
+                            icon = q.correct_answer.includes(option) ? "&#10004;" : "&#10008;";
+                            label = "<span class='option-label'>Your Answer</span>";
+                        }
+                    } else {
+                        if (option === q.correct_answer) {
+                            optionClass = "correct-answer";
+                            label = "<span class='option-label'>Correct Answer</span>";
+                        }
+                        if (userAnswer === option) {
+                            icon = userAnswer === q.correct_answer ? "&#10004;" : "&#10008;";
+                            label = "<span class='option-label'>Your Answer</span>";
+                        }
+                    }
+
+                    reviewHtml += `<li class="${optionClass}">
+                        <span class="icon">${icon}</span>
+                        <span class="option-text">${option}</span>
+                        <span class="option-label">${label}</span>
+                    </li>`;
+                });
+
+                reviewHtml += `</ul>
+                    ${notAnswered}
+                    <p class="timeTaken">Time Taken: <strong>${60 - timeLeft}</strong> sec</p>
+                    <hr>
+                </div>`;
+            });
+
+            document.getElementById("review").innerHTML = reviewHtml;
+        }
+
+        document.getElementById("againQuiz").addEventListener("click", function () {
+            sessionStorage.clear();
+            window.location.href = "quiz.html?id=1";
+        });
+
+        document.addEventListener("DOMContentLoaded", showReview);
+    </script>
+</body>
+</html>

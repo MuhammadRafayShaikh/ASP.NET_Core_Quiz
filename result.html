@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Result</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .result-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: auto;
+        }
+
+        h2 {
+            color: #28a745;
+        }
+
+        p {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="result-container">
+        <h2>Quiz Completed!</h2>
+        <p id="score">Calculating...</p>
+        <div class="btnparent">
+            <button id="review-btn">Check Answers</button>
+            <button id="shareScore">Share Score</button>
+            <button id="againQuiz">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const jsonData = {
+            quiz1: [
+                {
+                    id: 1,
+                    question: "Which architectural pattern does ASP.NET Core follow?",
+                    options: ["MVC (Model-View-Controller)", "MVVM (Model-View-ViewModel)", "MVP (Model-View-Presenter)", "None of the above"],
+                    correct_answer: "MVC (Model-View-Controller)",
+                    multiple_answers: false
+                },
+                {
+                    id: 2,
+                    question: "What is the purpose of dependency injection in ASP.NET Core?",
+                    options: ["To make the code more complex", "To replace hard-coded dependencies", "To slow down the server speed", "To handle URL routing"],
+                    correct_answer: "To replace hard-coded dependencies",
+                    multiple_answers: false
+                },
+                {
+                    id: 3,
+                    question: "Which of the following are features of ASP.NET Core?",
+                    options: ["Cross-platform support", "Built-in dependency injection", "Real-time communication", "All of the above"],
+                    correct_answer: ["Cross-platform support", "Built-in dependency injection", "Real-time communication"],
+                    multiple_answers: true
+                },
+                {
+                    id: 4,
+                    question: "The appsettings.json file in ASP.NET Core is used to store configuration settings.",
+                    options: ["True", "False"],
+                    correct_answer: "True",
+                    multiple_answers: false
+                },
+                {
+                    id: 5,
+                    question: "Which programming language is primarily used in ASP.NET Core?",
+                    options: ["Java", "PHP", "C#", "Python"],
+                    correct_answer: "C#",
+                    multiple_answers: false
+                }
+            ]
+        };
+
+        function calculateScore() {
+            let correct = 0;
+            let totalQuestions = jsonData.quiz1.length;
+
+            jsonData.quiz1.forEach(q => {
+                let userAnswer = sessionStorage.getItem("answer_" + q.id);
+                if (q.multiple_answers) {
+                    if (userAnswer) {
+                        userAnswer = JSON.parse(userAnswer);
+                        let correctCount = 0;
+
+                        userAnswer.forEach(answer => {
+                            if (q.correct_answer.includes(answer)) {
+                                correctCount++;
+                            }
+                        });
+
+                        let partialScore = correctCount / q.correct_answer.length;
+                        correct += partialScore;
+                    }
+                } else {
+                    if (userAnswer === q.correct_answer) {
+                        correct++;
+                    }
+                }
+            });
+
+            let percentage = (correct / totalQuestions) * 100;
+            document.getElementById("score").innerHTML = `You got ${correct.toFixed(2)} out of ${totalQuestions} correct! <br> Percentage: ${percentage.toFixed(2)}%`;
+        }
+
+        document.getElementById("review-btn").addEventListener("click", function () {
+            window.location.href = "review.html";
+        });
+
+        document.getElementById("againQuiz").addEventListener("click", function () {
+            sessionStorage.clear();
+            window.location.href = "quiz.html?id=1";
+        });
+
+        document.getElementById("shareScore").addEventListener("click", function () {
+            let scoreText = document.getElementById("score").innerText;
+            let shareMessage = encodeURIComponent(`I just completed the ASP.NET Core Quiz! 🎉\n\n${scoreText}\n\nTry it yourself!\n` + `https://muhammadrafayshaikh.github.io/ASP.NET_Core_Quiz`);
+
+            let whatsappLink = `https://api.whatsapp.com/send?text=${shareMessage}`;
+            let facebookLink = `https://www.facebook.com/sharer/sharer.php?u=https://muhammadrafayshaikh.github.io/ASP.NET_Core_Quiz/&quote=${shareMessage}`;
+
+            let shareOptions = `
+                <p>Share on:</p>
+                <a href="${whatsappLink}" target="_blank">WhatsApp</a> |
+                <a href="${facebookLink}" target="_blank">Facebook</a>
+            `;
+            document.getElementById("score").insertAdjacentHTML("afterend", shareOptions);
+        });
+
+        document.addEventListener("DOMContentLoaded", calculateScore);
+    </script>
+</body>
+
+</html>
